@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crosscut</title>
+<meta name="description" content="One story, every side. A free cross-spectrum news reader.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>Crosscut</h1>
+        <p>One story, every side</p>
+      </div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </div>
+</header>
+
+<nav class="bar">
+  <div class="wrap bar-in">
+    <div class="filters" id="filters">
+      <button data-filter="all" class="on">All stories</button>
+      <button data-filter="blindspot">Blindspots</button>
+      <button data-filter="wide">Widely covered</button>
+    </div>
+    <input id="search" type="search" placeholder="Search headlines…" autocomplete="off">
+  </div>
+</nav>
+
+<main class="wrap" id="main">
+  <p class="loading">Loading coverage…</p>
+</main>
+
+<footer class="wrap foot">
+  <h2>How this works</h2>
+  <p>
+    Crosscut pulls public RSS feeds from <b id="outletTotal">50+</b> US outlets, groups
+    articles covering the same story, and shows how that coverage is spread across the
+    political spectrum. A <b>blindspot</b> is a story one side is largely not reporting.
+  </p>
+  <p class="warn">
+    <b>About the lean ratings.</b> These are a hand-curated placement of each outlet on a
+    US left/right axis, based on commonly cited positions in public media-bias work. They
+    are <b>not</b> licensed ratings from AllSides, Ad&nbsp;Fontes or Media Bias/Fact Check —
+    the three services Ground News averages. Ratings apply to the <i>outlet</i>, never to an
+    individual article. Treat them as a rough guide and argue with them: the whole list
+    lives in <code>feeds.json</code>.
+  </p>
+  <p class="warn">
+    <b>Grouping is automatic and imperfect.</b> Stories are clustered by headline similarity.
+    Occasionally coverage of one event lands in two groups, which can make a side look absent
+    when it isn't. Always click through before concluding a blindspot is real.
+  </p>
+  <p class="src">Headlines and links only — full article text is never copied. Everything links back to the publisher.</p>
+  <div id="health"></div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

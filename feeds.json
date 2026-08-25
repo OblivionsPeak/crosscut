@@ -1,0 +1,272 @@
+{
+  "_comment": "Hand-curated outlet list. `lean` is a placement on a US left/right axis using commonly cited positions from public media-bias work; it is NOT a licensed rating from AllSides, Ad Fontes or MBFC. Edit freely - this file is the whole configuration.",
+  "_lean_values": [
+    "left",
+    "lean-left",
+    "center",
+    "lean-right",
+    "right"
+  ],
+  "outlets": [
+    {
+      "name": "Mother Jones",
+      "lean": "left",
+      "url": "https://www.motherjones.com/feed/"
+    },
+    {
+      "name": "The Nation",
+      "lean": "left",
+      "url": "https://www.thenation.com/feed/?post_type=article"
+    },
+    {
+      "name": "HuffPost",
+      "lean": "left",
+      "url": "https://www.huffpost.com/section/politics/feed"
+    },
+    {
+      "name": "Slate",
+      "lean": "left",
+      "url": "https://slate.com/feeds/all.rss"
+    },
+    {
+      "name": "The Daily Beast",
+      "lean": "left",
+      "url": "https://www.thedailybeast.com/arc/outboundfeeds/rss/"
+    },
+    {
+      "name": "Vox",
+      "lean": "left",
+      "url": "https://www.vox.com/rss/index.xml"
+    },
+    {
+      "name": "Rolling Stone",
+      "lean": "left",
+      "url": "https://www.rollingstone.com/politics/feed/"
+    },
+    {
+      "name": "The New Yorker",
+      "lean": "left",
+      "url": "https://www.newyorker.com/feed/news"
+    },
+    {
+      "name": "The New York Times",
+      "lean": "lean-left",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    },
+    {
+      "name": "The Washington Post",
+      "lean": "lean-left",
+      "url": "https://feeds.washingtonpost.com/rss/national"
+    },
+    {
+      "name": "CNN",
+      "lean": "lean-left",
+      "url": "http://rss.cnn.com/rss/cnn_topstories.rss"
+    },
+    {
+      "name": "NBC News",
+      "lean": "lean-left",
+      "url": "https://feeds.nbcnews.com/nbcnews/public/news"
+    },
+    {
+      "name": "ABC News",
+      "lean": "lean-left",
+      "url": "https://abcnews.go.com/abcnews/topstories"
+    },
+    {
+      "name": "CBS News",
+      "lean": "lean-left",
+      "url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+      "name": "NPR",
+      "lean": "lean-left",
+      "url": "https://feeds.npr.org/1001/rss.xml"
+    },
+    {
+      "name": "Politico",
+      "lean": "lean-left",
+      "url": "https://rss.politico.com/politics-news.xml"
+    },
+    {
+      "name": "The Atlantic",
+      "lean": "lean-left",
+      "url": "https://www.theatlantic.com/feed/all/"
+    },
+    {
+      "name": "Los Angeles Times",
+      "lean": "lean-left",
+      "url": "https://www.latimes.com/rss2.0.xml"
+    },
+    {
+      "name": "Time",
+      "lean": "lean-left",
+      "url": "https://time.com/feed/"
+    },
+    {
+      "name": "Bloomberg",
+      "lean": "lean-left",
+      "url": "https://feeds.bloomberg.com/politics/news.rss"
+    },
+    {
+      "name": "The Guardian US",
+      "lean": "lean-left",
+      "url": "https://www.theguardian.com/us-news/rss"
+    },
+    {
+      "name": "Associated Press",
+      "lean": "center",
+      "url": "https://news.google.com/rss/search?q=when:2d+site:apnews.com&hl=en-US&gl=US&ceid=US:en",
+      "via": "google-news"
+    },
+    {
+      "name": "Reuters",
+      "lean": "center",
+      "url": "https://news.google.com/rss/search?q=when:2d+site:reuters.com&hl=en-US&gl=US&ceid=US:en",
+      "via": "google-news"
+    },
+    {
+      "name": "BBC News (US)",
+      "lean": "center",
+      "url": "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml"
+    },
+    {
+      "name": "The Hill",
+      "lean": "center",
+      "url": "https://thehill.com/news/feed/"
+    },
+    {
+      "name": "Axios",
+      "lean": "center",
+      "url": "https://api.axios.com/feed/"
+    },
+    {
+      "name": "USA Today",
+      "lean": "center",
+      "url": "https://news.google.com/rss/search?q=when:2d+site:usatoday.com&hl=en-US&gl=US&ceid=US:en",
+      "via": "google-news"
+    },
+    {
+      "name": "Newsweek",
+      "lean": "center",
+      "url": "https://www.newsweek.com/rss"
+    },
+    {
+      "name": "Christian Science Monitor",
+      "lean": "center",
+      "url": "https://rss.csmonitor.com/feeds/usa"
+    },
+    {
+      "name": "NewsNation",
+      "lean": "center",
+      "url": "https://www.newsnationnow.com/feed/"
+    },
+    {
+      "name": "Straight Arrow News",
+      "lean": "center",
+      "url": "https://san.com/feed/"
+    },
+    {
+      "name": "Forbes",
+      "lean": "center",
+      "url": "https://www.forbes.com/business/feed/"
+    },
+    {
+      "name": "The Wall Street Journal",
+      "lean": "lean-right",
+      "url": "https://feeds.content.dowjones.io/public/rss/RSSWorldNews"
+    },
+    {
+      "name": "New York Post",
+      "lean": "lean-right",
+      "url": "https://nypost.com/feed/"
+    },
+    {
+      "name": "Washington Examiner",
+      "lean": "lean-right",
+      "url": "https://www.washingtonexaminer.com/feed/"
+    },
+    {
+      "name": "The Washington Times",
+      "lean": "lean-right",
+      "url": "https://www.washingtontimes.com/rss/headlines/news/politics/"
+    },
+    {
+      "name": "National Review",
+      "lean": "lean-right",
+      "url": "https://www.nationalreview.com/feed/"
+    },
+    {
+      "name": "Reason",
+      "lean": "lean-right",
+      "url": "https://reason.com/feed/"
+    },
+    {
+      "name": "Fox Business",
+      "lean": "lean-right",
+      "url": "https://moxie.foxbusiness.com/google-publisher/latest.xml"
+    },
+    {
+      "name": "The Free Press",
+      "lean": "lean-right",
+      "url": "https://www.thefp.com/feed"
+    },
+    {
+      "name": "Just the News",
+      "lean": "lean-right",
+      "url": "https://justthenews.com/rss.xml"
+    },
+    {
+      "name": "Fox News",
+      "lean": "right",
+      "url": "https://moxie.foxnews.com/google-publisher/latest.xml"
+    },
+    {
+      "name": "Breitbart",
+      "lean": "right",
+      "url": "https://feeds.feedburner.com/breitbart"
+    },
+    {
+      "name": "The Daily Wire",
+      "lean": "right",
+      "url": "https://www.dailywire.com/feeds/rss.xml"
+    },
+    {
+      "name": "Newsmax",
+      "lean": "right",
+      "url": "https://www.newsmax.com/rss/Politics/1/"
+    },
+    {
+      "name": "The Federalist",
+      "lean": "right",
+      "url": "https://thefederalist.com/feed/"
+    },
+    {
+      "name": "The Daily Caller",
+      "lean": "right",
+      "url": "https://dailycaller.com/feed/"
+    },
+    {
+      "name": "The Blaze",
+      "lean": "right",
+      "url": "https://www.theblaze.com/feeds/feed.rss"
+    },
+    {
+      "name": "The Epoch Times",
+      "lean": "right",
+      "url": "https://news.google.com/rss/search?q=when:2d+site:theepochtimes.com&hl=en-US&gl=US&ceid=US:en",
+      "via": "google-news"
+    },
+    {
+      "name": "Townhall",
+      "lean": "right",
+      "url": "https://news.google.com/rss/search?q=when:2d+site:townhall.com&hl=en-US&gl=US&ceid=US:en",
+      "via": "google-news"
+    },
+    {
+      "name": "The American Conservative",
+      "lean": "right",
+      "url": "https://www.theamericanconservative.com/feed/"
+    }
+  ]
+}
