@@ -20,7 +20,10 @@ from pathlib import Path
 
 import feedparser
 
+import learn
+
 ROOT = Path(__file__).parent
+STATE_DIR = ROOT / ".state"
 UA = {"User-Agent": "Mozilla/5.0 (compatible; Crosscut/0.1; +https://github.com/OblivionsPeak/crosscut)"}
 
 MAX_AGE_HOURS = 36      # ignore anything staler than this
@@ -80,8 +83,8 @@ def summarise(entry):
     return text[:280]
 
 
-def collect(outlets):
-    articles, failures = [], []
+def collect(outlets, state):
+    articles, failures, healing = [], [], []
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(hours=MAX_AGE_HOURS)
 
@@ -89,7 +92,11 @@ def collect(outlets):
         for outlet, entries, err in pool.map(fetch, outlets):
             if err:
                 failures.append({"outlet": outlet["name"], "error": err})
+                note = learn.record_feed_result(state, outlet, False, 0, err)
+                if note:
+                    healing.append(note)
                 continue
+            learn.record_feed_result(state, outlet, True, len(entries))
             seen = set()
             for e in entries:
                 title = clean_title(e.get("title", ""), outlet["name"], outlet.get("via"))
@@ -108,7 +115,7 @@ def collect(outlets):
                     "published": when.isoformat() if when else None,
                     "summary": summarise(e),
                 })
-    return articles, failures
+    return articles, failures, healing
 
 
 # ------------------------------------------------------------- clustering
@@ -232,24 +239,29 @@ def merge_pass(centroids, members, idf):
 
 # ---------------------------------------------------------------- scoring
 
-def score_story(arts):
-    counts = Counter(a["lean"] for a in arts)
-    total = len(arts)
-    left = counts["left"] + counts["lean-left"]
-    right = counts["right"] + counts["lean-right"]
-    sided = left + right
+def score_story(arts, exp_left, exp_right):
+    """Coverage shape for one story.
 
-    blindspot = None
-    if total >= 4 and sided >= 3:
-        if right == 0 or (right / sided) <= 0.12:
-            blindspot = "right"     # the right is not covering this
-        elif left == 0 or (left / sided) <= 0.12:
-            blindspot = "left"
+    Blindspots are judged against each side's *baseline* participation rather
+    than raw counts, so a side isn't flagged absent merely because its outlets
+    publish less. See learn.blindspot_for.
+    """
+    counts = Counter(a["lean"] for a in arts)
+    # Count distinct outlets, not articles: one outlet filing three times on a
+    # story should not make its side look three times as engaged.
+    per_lean_outlets = Counter()
+    for lean, name in {(a["lean"], a["outlet"]) for a in arts}:
+        per_lean_outlets[lean] += 1
+
+    total_outlets = sum(per_lean_outlets.values())
+    side, detail = learn.blindspot_for(per_lean_outlets, exp_left, exp_right, total_outlets)
     return {
         "leans": {k: counts.get(k, 0) for k in LEANS},
-        "total": total,
+        "lean_outlets": {k: per_lean_outlets.get(k, 0) for k in LEANS},
+        "total": len(arts),
         "outlets": len({a["outlet"] for a in arts}),
-        "blindspot": blindspot,
+        "blindspot": side,
+        "blindspot_detail": detail,
     }
 
 
@@ -263,54 +275,89 @@ def representative(arts):
 
 def main():
     cfg = json.loads((ROOT / "feeds.json").read_text("utf-8"))
-    outlets = cfg["outlets"]
+    configured = cfg["outlets"]
+
+    state = learn.load_state(STATE_DIR)
+    state["runs"] += 1
+    print(f"state: run #{state['runs']}, {state['story_total']} stories seen to date")
+
+    outlets, prep_notes = learn.prepare_feeds(configured, state)
+    for n in prep_notes:
+        print(f"  healing: {n['outlet']} -> {n['action']} ({n['detail']})")
     print(f"fetching {len(outlets)} feeds...")
 
-    articles, failures = collect(outlets)
+    articles, failures, healing = collect(outlets, state)
     print(f"  {len(articles)} articles, {len(failures)} feed failures")
+    for n in healing:
+        print(f"  healing: {n['outlet']} -> {n['action']} ({n['detail']})")
     if not articles:
+        # Never overwrite a good dataset with an empty one.
         raise SystemExit("no articles fetched - refusing to write an empty dataset")
 
     vectors, idf = build_vectors(articles)
     groups = cluster(articles, vectors, idf)
     print(f"  {len(groups)} groups")
 
+    exp_left = learn.expected_side(state, configured, learn.LEFT_SIDE)
+    exp_right = learn.expected_side(state, configured, learn.RIGHT_SIDE)
+    print(f"  baseline participation: left {exp_left:.2f}, right {exp_right:.2f} outlets/story")
+
     stories = []
-    for gi, idxs in enumerate(groups):
+    for idxs in groups:
         arts = [articles[i] for i in idxs]
-        if len(arts) < MIN_CLUSTER:
-            continue
         if len({a["outlet"] for a in arts}) < MIN_CLUSTER:
             continue                                   # same outlet repeating itself
-        s = score_story(arts)
+        s = score_story(arts, exp_left, exp_right)
         arts.sort(key=lambda a: (LEANS.index(a["lean"]), a["outlet"]))
-        stories.append({
-            "id": f"s{gi}",
-            "title": representative(arts),
-            **s,
-            "articles": arts,
-        })
+        stories.append({"title": representative(arts), **s, "articles": arts})
 
     stories.sort(key=lambda s: (-s["outlets"], -s["total"]))
-    ungrouped = sum(1 for g in groups if len(g) < MIN_CLUSTER)
+    stories = stories[:120]
+
+    now = datetime.now(timezone.utc)
+    learn.assign_ids(state, stories, idf, now)
+    learn.update_coverage_rates(state, stories, {a["outlet"] for a in articles})
+    learn.record_cooccurrence(state, stories)
+    axis = learn.learn_axis(state, configured)
+
+    if axis:
+        print(f"  learned axis: {len(axis['scores'])} outlets, "
+              f"agreement with hand labels r={axis['agreement_with_hand_labels']}, "
+              f"confident={axis['confident']}")
+    else:
+        print("  learned axis: not enough history yet")
+
+    health = {name: {
+        "ok": st["ok"], "fail": st["fail"], "consec_fail": st["consec_fail"],
+        "fallback": st["fallback"], "disabled": st["disabled"],
+        "articles_ewma": round(st["articles_ewma"], 1) if st["articles_ewma"] else None,
+        "coverage_ewma": round(st["coverage_ewma"], 3) if st["coverage_ewma"] else None,
+    } for name, st in state["outlets"].items()}
 
     out = {
-        "generated": datetime.now(timezone.utc).isoformat(),
+        "generated": now.isoformat(),
+        "run": state["runs"],
         "article_count": len(articles),
         "outlet_count": len({a["outlet"] for a in articles}),
         "story_count": len(stories),
-        "single_source_count": ungrouped,
+        "single_source_count": sum(1 for g in groups if len(g) < MIN_CLUSTER),
         "leans": LEANS,
-        "outlets": [{"name": o["name"], "lean": o["lean"]} for o in outlets],
+        "outlets": [{"name": o["name"], "lean": o["lean"]} for o in configured],
         "failures": failures,
-        "stories": stories[:120],
+        "healing": prep_notes + healing,
+        "baseline": {"left": round(exp_left, 2), "right": round(exp_right, 2)},
+        "axis": axis,
+        "health": health,
+        "stories": stories,
     }
     dest = ROOT / "data"
     dest.mkdir(exist_ok=True)
     (dest / "stories.json").write_text(json.dumps(out, ensure_ascii=False), "utf-8")
+    learn.save_state(STATE_DIR, state)
 
     blind = sum(1 for s in stories if s["blindspot"])
-    print(f"  wrote {len(out['stories'])} stories ({blind} with a blindspot)")
+    tracked = sum(1 for s in stories if s.get("age_hours", 0) > 2)
+    print(f"  wrote {len(stories)} stories ({blind} blindspots, {tracked} carried over from earlier runs)")
     for f in failures:
         print(f"  FEED FAILED: {f['outlet']}: {f['error']}")
 

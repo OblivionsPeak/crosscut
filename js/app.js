@@ -47,11 +47,41 @@ function renderMeta() {
     '<b>' + DATA.story_count + '</b> stories · <b>' + blind + '</b> blindspots · updated ' + ago(DATA.generated);
   $('#outletTotal').textContent = DATA.outlets.length;
 
+  const bits = [];
   if (DATA.failures && DATA.failures.length) {
-    $('#health').innerHTML = '<b>' + DATA.failures.length + ' feed(s) failed this run:</b> ' +
-      DATA.failures.map((f) => f.outlet).join(', ') +
-      ' — those outlets are missing from the coverage below.';
+    bits.push(['bad', '<b>' + DATA.failures.length + ' feed(s) failed this run:</b> ' +
+      DATA.failures.map((f) => esc(f.outlet)).join(', ') +
+      ' — those outlets are missing from the coverage above.']);
   }
+  if (DATA.healing && DATA.healing.length) {
+    bits.push(['', '<b>Self-healing:</b> ' + DATA.healing.map((h) =>
+      esc(h.outlet) + ' → ' + esc(h.action)).join('; ') + '.']);
+  }
+  if (DATA.baseline) {
+    bits.push(['', 'Baseline participation on an average story: <b>' + DATA.baseline.left +
+      '</b> left-of-centre outlets, <b>' + DATA.baseline.right +
+      '</b> right-of-centre. Blindspots are measured against these, not raw counts.']);
+  }
+  bits.push(['', learnedAxisNote()]);
+  $('#health').innerHTML = bits.filter((b) => b[1])
+    .map((b) => '<p class="' + b[0] + '">' + b[1] + '</p>').join('');
+}
+
+function learnedAxisNote() {
+  const a = DATA.axis;
+  if (!a) {
+    return 'The learned co-coverage axis needs more history before it will report ' +
+           'anything (run ' + (DATA.run || 1) + ' so far).';
+  }
+  const r = a.agreement_with_hand_labels;
+  const base = 'Learned co-coverage axis: <b>' + a.stories_observed +
+    '</b> stories observed across <b>' + a.runs + '</b> runs, correlation with the ' +
+    'hand-curated leans <b>r = ' + r + '</b>. ';
+  return base + (a.confident
+    ? 'This is now considered stable enough to be meaningful.'
+    : 'Still below the confidence bar, so it is reported but not used for anything. ' +
+      'It measures which outlets pick the same stories, which is related to political ' +
+      'lean but is not the same thing.');
 }
 
 function wire() {
@@ -103,6 +133,30 @@ function esc(s) {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+function ageLabel(s) {
+  if (s.age_hours == null) return '';
+  if (s.age_hours < 1.5) return 'new';
+  if (s.age_hours < 24) return Math.round(s.age_hours) + 'h old';
+  return Math.round(s.age_hours / 24) + 'd old';
+}
+
+function pickupLabel(s) {
+  if (!s.pickup) return '';
+  const side = s.pickup.first === 'left' ? 'Left' : 'Right';
+  const other = s.pickup.first === 'left' ? 'right' : 'left';
+  const h = s.pickup.hours;
+  const t = h < 24 ? h + 'h' : Math.round(h / 24) + 'd';
+  return `<span class="pickup">${side} covered this ${t} before the ${other}</span>`;
+}
+
+function blindspotTitle(s) {
+  const d = s.blindspot_detail;
+  if (!d) return 'One side is largely not covering this story';
+  const side = s.blindspot === 'right' ? d.right : d.left;
+  return `${side.observed} outlet(s) covering, against a baseline of about ` +
+         `${side.expected} for that side on an average story`;
+}
+
 function storyHTML(s) {
   const groups = LEANS.map((k) => {
     const arts = s.articles.filter((a) => a.lean === k);
@@ -115,14 +169,18 @@ function storyHTML(s) {
   }).join('');
 
   const flag = s.blindspot
-    ? `<span class="flag">${s.blindspot === 'right' ? 'Right' : 'Left'} blindspot</span>` : '';
+    ? `<span class="flag" title="${esc(blindspotTitle(s))}">${
+        s.blindspot === 'right' ? 'Right' : 'Left'} blindspot</span>` : '';
+  const age = ageLabel(s);
 
-  return `<article class="story" data-id="${s.id}">
+  return `<article class="story" data-id="${esc(s.id)}">
     <div class="story-head">
       <h3>${esc(s.title)}</h3>
       ${covBar(s.leans, s.total)}
       <div class="counts">
-        <span><b>${s.outlets}</b> outlets · ${s.total} articles</span>${flag}
+        <span><b>${s.outlets}</b> outlets · ${s.total} articles</span>
+        ${age ? `<span class="age">${age}</span>` : ''}
+        ${flag}${pickupLabel(s)}
       </div>
       ${legend(s.leans)}
     </div>

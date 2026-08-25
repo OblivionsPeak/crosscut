@@ -10,7 +10,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write      # needed to force-push the state branch
   pages: write
   id-token: write
 
@@ -32,8 +32,35 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # State lives on an orphan `state` branch. Restoring it by archive avoids
+      # touching the working tree; the branch is rewritten wholesale each run so
+      # its history stays exactly one commit deep.
+      - name: Restore learned state
+        run: |
+          mkdir -p .state
+          if git ls-remote --exit-code --heads origin state >/dev/null 2>&1; then
+            git fetch --depth=1 origin state
+            git archive FETCH_HEAD | tar -x -C .state
+            echo "restored state ($(wc -c < .state/state.json) bytes)"
+          else
+            echo "no state branch yet - cold start"
+          fi
+
       - name: Fetch feeds and cluster
         run: python build.py
+
+      # Only after a successful build, so a failed run can never wipe what has
+      # been learned so far.
+      - name: Persist learned state
+        run: |
+          cd .state
+          git init -q
+          git checkout -q -b state
+          git add -A
+          git -c user.email=actions@github.com -c user.name="Crosscut bot" \
+              commit -q -m "state after run $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push -q --force \
+              "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" state
 
       - name: Assemble site
         run: |

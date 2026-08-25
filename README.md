@@ -80,6 +80,49 @@ coverage under a site query, and its reporting largely mirrors NBC.
 If a feed dies, the build reports it and the site shows a health line naming the
 missing outlets, rather than silently pretending the spectrum is still balanced.
 
+## What improves over time
+
+Actions runs are stateless, so anything that learns needs a store. State lives
+on an orphan `state` branch that is force-pushed each run — one commit deep, so
+it persists indefinitely without growing history. It's written *after* a
+successful build, so a failed run can't wipe what's been learned.
+
+**Feed self-healing.** Every feed's success rate is tracked. After 2 consecutive
+failures a feed is rewritten to its Google News site-search fallback; after 8 it
+is disabled and reported. A healed feed's original URL is re-tested every 60
+runs in case the outlet fixes it. Washington Times silently vanished from one
+deploy run — this makes that self-correcting.
+
+**Blindspots normalized by baseline.** The first version just counted articles,
+which was wrong: NPR's feed carries 10 items and CNN's carries 69, so
+low-volume outlets looked absent constantly and generated false blindspots. Each
+outlet now has a learned `coverage_ewma` — the share of stories it typically
+appears in. A side is flagged only when its participation falls materially below
+*its own* baseline, and the UI shows observed-vs-expected on hover rather than
+asking for blind trust.
+
+**Stable story identity.** Stories keep an id across runs, matched on
+fingerprint overlap of their distinctive terms. That yields story age and the
+pickup gap — *"Left covered this 9h before the right"* — which only exists
+because first-seen times survive between builds.
+
+**Learned co-coverage axis.** An outlet × outlet co-coverage matrix accumulates
+every run. Classical MDS over it (double-centred, so the dominant "how much does
+this outlet publish" component drops out) gives a 1-D axis of which outlets pick
+the same stories. The hand labels are used *only* to orient the sign, never as
+input values.
+
+Two honest caveats on that last one:
+
+- It measures **story-selection similarity**, not political bias. Those
+  correlate, but the axis could as easily be tracking topic mix or newsroom
+  size. The UI says so.
+- **It is not yet working.** After 93 stories, correlation with the hand labels
+  is r ≈ 0.13 — very weak. It's gated behind a confidence check (400+ stories
+  and |r| > 0.3) and reports itself as unconfident until then. Whether it
+  converges to something meaningful over weeks is an open empirical question,
+  not a promise.
+
 ## Limits
 
 - **Headlines, summaries and links only.** Full article text is never copied.
